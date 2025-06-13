@@ -2,7 +2,7 @@ import os
 import requests
 import pandas as pd
 import json
-from .utils import authenticate, get_timeseries, get_metadata, get_citi_ids, get_identifier_info, get_tag_listings, check_api_status
+from .utils import authenticate, get_timeseries, get_metadata, get_citi_ids, get_identifier_info, get_tag_listings
 
 class API:
     token_url= "https://api.citivelocity.com/markets/cv/api/oauth2/token"
@@ -93,3 +93,18 @@ class API:
         data = get_metadata(self._auth['access_token'], self.client_id, tags=tags, frequency=frequency)
 
         return data
+
+    def get_citi_ids_from_bbg_tickers(self, bbg_tickers, product_type="Equity", primary_only=True):
+        if not self.is_token_valid():
+            self._auth = authenticate(self.client_id, self.client_secret)
+        queries = []
+        for ticker in bbg_tickers:
+            queries.append({
+                "identifier": ticker,
+                "identifierType": "BBT",
+                "productType": product_type,
+                "primaryOnly": primary_only
+            })
+        data = get_citi_ids(self._auth['access_token'], self.client_id, queries)
+        if data['status'] == 'OK':
+            return zip(bbg_tickers, data['ids'])
