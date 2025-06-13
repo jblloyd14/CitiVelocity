@@ -1,48 +1,5 @@
 import requests
 import json
-import pandas as pd
-
-
-def check_api_status(access_token):
-    """
-    Check the status of the CitiVelocity API.
-    
-    Args:
-        access_token (str): OAuth2 access token obtained from authenticate()
-        
-    Returns:
-        dict: A dictionary containing the API status information with the following structure:
-            {
-                "api": {
-                    "state": str,  # e.g., "READY"
-                    "quotaUsed": int,  # Number of bytes used
-                    "quotaLimit": int   # Total quota in bytes
-                },
-                "status": str  # e.g., "OK"
-            }
-            
-    Example:
-        status = check_api_status(access_token)
-        print(f"API State: {status['api']['state']}")
-        print(f"Quota Used: {status['api']['quotaUsed']}/{status['api']['quotaLimit']}")
-    """
-    url = "https://api.citivelocity.com/markets/analytics/chartingbe/rest/external/authed/ibe/apistatus"
-    
-    headers = {
-        'accept': 'application/json',
-        'authorization': f'Bearer {access_token}'
-    }
-    
-    try:
-        response = requests.get(url, headers=headers)
-        response.raise_for_status()
-        return response.json()
-    except requests.exceptions.RequestException as e:
-        print(f"Error checking API status: {e}")
-        if hasattr(e, 'response') and e.response is not None:
-            print(f"Response status code: {e.response.status_code}")
-            print(f"Response content: {e.response.text}")
-        raise
 
 
 def authenticate(client_id, client_secret):
@@ -120,12 +77,8 @@ def get_tag_listings(access_token, client_id, category, sub_category, *optional_
     }
     
     try:
-        response = requests.post(
-            url,
-            json=payload,
-            headers=headers,
-            params=params,
-            proxies=proxies
+        response = requests.post(url, json=payload, headers=headers,
+                                 params=params, proxies=proxies
         )
         
         # Raise an exception for HTTP errors
@@ -141,19 +94,19 @@ def get_tag_listings(access_token, client_id, category, sub_category, *optional_
         raise
 
 
-def get_identifier_info(access_token, citi_ids):
+def get_identifier_info(access_token, client_id, citi_ids):
     """
     Convert Citi Equity Identifiers to other identifier types.
     
-    Args:
-        access_token (str): OAuth2 access token obtained from authenticate()
-        citi_ids (list): List of Citi Equity Identifiers (integers)
+    :param access_token: OAuth2 access token obtained from authenticate()
+    :param client_id: Client ID for the API
+    :param citi_ids: List of Citi Equity Identifiers
         
     Returns:
         dict: JSON response containing identifier information
         
     Example:
-        response = get_identifier_info(access_token, [306888, 56280, 92141])
+        response = get_identifier_info(access_token, client_id, [306888, 56280, 92141])
         # Returns information for each ID including RIC, MIC, ETS, BBT, and ISIN
     """
     url = "https://api.citivelocity.com/markets/analytics/chartingbe/rest/external/authed/citiids/from"
@@ -163,13 +116,16 @@ def get_identifier_info(access_token, citi_ids):
         'accept': 'application/json',
         'authorization': f'Bearer {access_token}'
     }
+    params = {
+        'client_id': client_id
+    }
     
     payload = {
         "ids": citi_ids
     }
     
     try:
-        response = requests.post(url, json=payload, headers=headers)
+        response = requests.post(url, json=payload, headers=headers, params=params)
         response.raise_for_status()
         return response.json()
     except requests.exceptions.RequestException as e:
@@ -180,7 +136,7 @@ def get_identifier_info(access_token, citi_ids):
         raise
 
 
-def get_citi_ids(access_token, queries):
+def get_citi_ids(access_token, client_id, queries):
     """
     Convert other identifier types to Citi Equity Identifiers.
     
@@ -214,7 +170,7 @@ def get_citi_ids(access_token, queries):
     ARCX, XAMS, XASE, XASX, XBRU, XCSE, XETR, XFRA, XHEL, XHKG, XJPX, XLIS,
     XLON, XNAS, XNCM, XNGS, XNMS, XNYS, XPAR, XSTO, XTKS
     """
-    url = "https://api.citivelocity.com/markets/analytics/chartingbe/rest/external/authed/citiids/to"
+    url = f"https://api.citivelocity.com/markets/analytics/chartingbe/rest/external/authed/citiids/to"
     
     headers = {
         'content-type': 'application/json',
@@ -225,9 +181,12 @@ def get_citi_ids(access_token, queries):
     payload = {
         "queries": queries
     }
+    params = {
+        'client_id': client_id
+    }
     
     try:
-        response = requests.post(url, json=payload, headers=headers)
+        response = requests.post(url, json=payload, headers=headers, params=params)
         response.raise_for_status()
         return response.json()
     except requests.exceptions.RequestException as e:
@@ -240,6 +199,7 @@ def get_citi_ids(access_token, queries):
 
 def get_timeseries(
     access_token,
+    client_id,
     tags,
     start_date,
     end_date,
@@ -247,13 +207,15 @@ def get_timeseries(
     start_time=None,
     end_time=None,
     price_points="C",
-    latest_only=False
+    latest_only=False,
+
 ):
     """
     Fetch timeseries data from CitiVelocity API.
     
     Args:
         access_token (str): OAuth2 access token obtained from authenticate()
+        client_id (str): Client ID for the API
         tags (list): List of data series tags to fetch (1-100 tags)
         start_date (str or int): Start date in YYYYMMDD format or as a date/datetime object
         end_date (str or int): End date in YYYYMMDD format or as a date/datetime object
@@ -308,9 +270,12 @@ def get_timeseries(
         'accept': 'application/json',
         'authorization': f'Bearer {access_token}'
     }
+    params = {
+        'client_id': client_id
+    }
     
     try:
-        response = requests.post(url, json=payload, headers=headers)
+        response = requests.post(url, json=payload, headers=headers, params=params)
         response.raise_for_status()
         return response.json()
     except requests.exceptions.RequestException as e:
@@ -322,12 +287,13 @@ def get_timeseries(
 
 
 
-def get_metadata(access_token, tags, frequency="EOD"):
+def get_metadata(access_token, client_id, tags, frequency="EOD"):
     """
     Fetch metadata for the given tags from CitiVelocity API.
     
     Args:
         access_token (str): OAuth2 access token obtained from authenticate()
+        client_id (str): Client ID for the API
         tags (list): List of tags to fetch metadata for (1-1000 tags)
         frequency (str, optional): Frequency of data. Must be either 'EOD' or 'INTRADAY'. 
                                 Defaults to 'EOD'. Note: modifiedTimes and endDate are only 
@@ -361,9 +327,12 @@ def get_metadata(access_token, tags, frequency="EOD"):
         "tags": tags,
         "frequency": frequency
     }
+    params = {
+        'client_id': client_id
+    }
     
     try:
-        response = requests.post(url, json=payload, headers=headers)
+        response = requests.post(url, json=payload, headers=headers, params=params)
         response.raise_for_status()
         return response.json()
         
