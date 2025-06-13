@@ -3,6 +3,47 @@ import json
 import pandas as pd
 
 
+def check_api_status(access_token):
+    """
+    Check the status of the CitiVelocity API.
+    
+    Args:
+        access_token (str): OAuth2 access token obtained from authenticate()
+        
+    Returns:
+        dict: A dictionary containing the API status information with the following structure:
+            {
+                "api": {
+                    "state": str,  # e.g., "READY"
+                    "quotaUsed": int,  # Number of bytes used
+                    "quotaLimit": int   # Total quota in bytes
+                },
+                "status": str  # e.g., "OK"
+            }
+            
+    Example:
+        status = check_api_status(access_token)
+        print(f"API State: {status['api']['state']}")
+        print(f"Quota Used: {status['api']['quotaUsed']}/{status['api']['quotaLimit']}")
+    """
+    url = "https://api.citivelocity.com/markets/analytics/chartingbe/rest/external/authed/ibe/apistatus"
+    
+    headers = {
+        'accept': 'application/json',
+        'authorization': f'Bearer {access_token}'
+    }
+    
+    try:
+        response = requests.get(url, headers=headers)
+        response.raise_for_status()
+        return response.json()
+    except requests.exceptions.RequestException as e:
+        print(f"Error checking API status: {e}")
+        if hasattr(e, 'response') and e.response is not None:
+            print(f"Response status code: {e.response.status_code}")
+            print(f"Response content: {e.response.text}")
+        raise
+
 
 def authenticate(client_id, client_secret):
     url = "https://api.citivelocity.com/markets/cv/api/oauth2/token"
