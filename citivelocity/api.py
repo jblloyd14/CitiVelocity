@@ -40,7 +40,7 @@ class API:
         now = int(pd.Timestamp.now().timestamp())
         return now - self._auth['consented_on'] < self._auth['expires_in']
 
-    def timeseries(self, tags, start_date=None, end_date=None, frequency=None, start_time=None, end_time=None,
+    def timeseries(self, tags, start_date=None, end_date=None, frequency='DAILY', start_time=None, end_time=None,
                    price_points="C", latest_only=False, pd_dataframe=True):
         """
         Get timeseries data for a given ticker and tags.
@@ -48,16 +48,16 @@ class API:
         :param tags: List of tags to retrieve data for.
         :param start_date: Start date for the data in 'YYYY-MM-DD' format. Defaults to None.
         :param end_date: End date for the data in 'YYYY-MM-DD' format. Defaults to None.
-        :param frequency: Frequency of the data. One of 'DAILY', 'WEEKLY', 'MONTHLY', 'HOURLY'. Defaults to None.
-        :param start_time: Start time for the data in 'HHMM' format. Defaults to None.
-        :param end_time: End time for the data in 'HHMM' format. Defaults to None.
+        :param frequency: Frequency of the data. One of 'DAILY', 'WEEKLY', 'MONTHLY', 'HOURLY'. Defaults to DAILY.
+        :param start_time: Start time for the data in 'HHMM' format. Defaults to None. tz is GMT
+        :param end_time: End time for the data in 'HHMM' format. Defaults to None. tz is GMT
         :param price_points: Price points to return. 'C' for Close, 'OHLC' for Open/High/Low/Close. Defaults to 'C'.
         :param latest_only: If True, returns only the latest data point. Defaults to False.
         :param pd_dataframe: If True, returns a pandas DataFrame. Defaults to True.
         :return: A pandas DataFrame containing the requested timeseries data or a dictionary if pd_dataframe is False.
 
         Example:
-        data = apit.timeseries(
+        data = API.timeseries(
             tags=['COMMODITIES.SPOT.SPOT_GOLD'],
             start_date='2022-01-01',
             end_date='2022-12-31',
@@ -65,6 +65,7 @@ class API:
             start_time='0000',
             end_time='2359',
             price_points='OHLC')
+
         """
         if not self.is_token_valid():
             self._auth = authenticate(self.client_id, self.client_secret)
@@ -74,9 +75,18 @@ class API:
             start_time=start_time, end_time=end_time, price_points=price_points, latest_only=latest_only
         )
         if pd_dataframe:
-            return pd.DataFrame(data)
-        else:
-            return data
+            raw_data = data['body']
+            df_list = []
+            for t in tags:
+                df = pd.DataFrame(raw_data[t])
+                df['tag'] = t
+                df_list.append(df)
+
+            data = pd.concat(df_list)
+            if 'type' in data.columns:
+                del data['type']
+
+        return data
 
 
     def metadata(self, tags, frequency="EOD"):
@@ -108,3 +118,5 @@ class API:
         data = get_citi_ids(self._auth['access_token'], self.client_id, queries)
         if data['status'] == 'OK':
             return zip(bbg_tickers, data['ids'])
+        else:
+            return data
