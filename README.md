@@ -9,9 +9,6 @@ this package does not offer functionality for intraday bulk exporter or intraday
 
 You can install the package using pip:
 
-I would recommend putting your client_id and client_secret in your environment variables
-under CITI_CLIENT_ID and CITI_CLIENT_SECRET respectively, the api will automatically
-pick those up for authentication.
 
 ```bash
 pip install git+https://github.com/jblloyd14/citivelocity.git --upgrade --no-cache-dir
