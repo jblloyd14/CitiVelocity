@@ -117,6 +117,6 @@ class API:
             })
         data = get_citi_ids(self._auth['access_token'], self.client_id, queries)
         if data['status'] == 'OK':
-            return zip(bbg_tickers, data['ids'])
+            return dict(zip(bbg_tickers, data['ids']))
         else:
             return data
