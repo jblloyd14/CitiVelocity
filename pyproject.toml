@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=42", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "citivelocity"
+version = "0.1.01"
+authors = [
+    {name = "Your Name", email = "blloyd@finblocks.com"},
+]
+description = "A Python client for interacting with CitiVelocity API"
+readme = "README.md"
+requires-python = ">=3.7"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+
+[project.urls]
+"Homepage" = "https://github.com/jblloyd14/citivelocity"
+"Bug Tracker" = "https://github.com/jblloyd14/citivelocity/issues"

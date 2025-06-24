@@ -9,7 +9,7 @@ from .utils import (
 )
 from .api import API
 
-__version__ = "0.1.0"
+__version__ = "0.1.01"
 __author__ = "j.b. lloyd"
 __all__ = [
     "API",
